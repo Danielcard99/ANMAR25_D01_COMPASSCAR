@@ -10,15 +10,9 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: process.env.DB_DIALECT,
+    timezone: "-03:00",
     dialectOptions: {
-      timezone: "America/Sao_Paulo",
       dateStrings: true,
-      typecast: (field, next) => {
-        if (field.type === "DATETIME") {
-          return new Date(field.string()).toISOString();
-        }
-        return next();
-      },
     },
   }
 );
@@ -27,6 +21,9 @@ async function testConnection() {
   try {
     await sequelize.authenticate();
     console.log("Connection has been established successfully!");
+
+    await sequelize.query("SET time_zone = '-03:00';");
+    console.log("Time zone set to -3:00");
   } catch (error) {
     console.log("Unable to connect to the database: ", error);
   }

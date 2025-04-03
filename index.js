@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import Cars from "./models/Cars.js";
-// import CarsItem from "./models/CarsItem.js";
+import CarsItem from "./models/CarsItem.js";
 import connection from "./db/connection.js";
 
 const app = express();
@@ -55,7 +55,7 @@ const validateCarData = (req, res, next) => {
 // Route to register a new car
 app.post("/api/v1/cars", validateCarData, async (req, res) => {
   const { brand, model, plate, year } = req.body;
-  
+
   try {
     const existingCar = await Cars.findOne({ where: { plate } });
 
@@ -72,7 +72,49 @@ app.post("/api/v1/cars", validateCarData, async (req, res) => {
 
     res.status(201).json(newCar);
   } catch (error) {
-    res.status(500).json({ error: "Error registering car" });
+    console.log("Database error:", error);
+    res.status(500).json({ errors: ["an internal server error occurred"] });
+  }
+});
+
+// Route to add items to an existing car
+app.put("/api/v1/cars/:id/items", async (req, res) => {
+  const carId = Number(req.params.id);
+  const items = req.body;
+  const errors = [];
+
+  // Validate the provided items
+  if (!Array.isArray(items) || items.length === 0) {
+    errors.push("items is required");
+  } else {
+    if (items.length > 5) {
+      errors.push("items must be a maximum of 5");
+    }
+
+    if (new Set(items).size !== items.length) {
+      errors.push("items cannot be repeated");
+    }
+  }
+
+  if (errors.length) {
+    return res.status(400).json({ errors });
+  }
+
+  try {
+    // Check if the car exists in the database
+    const carExists = await Cars.findByPk(carId);
+    if (!carExists) {
+      return res.status(404).json({ errors: ["car not found"] });
+    }
+
+    // Remove old items and add new ones
+    await CarsItem.destroy({ where: { car_id: carId } });
+    await CarsItem.bulkCreate(items.map((name) => ({ name, car_id: carId })));
+
+    res.status(204).send();
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ errors: ["an internal server error occurred"] });
   }
 });
 
@@ -85,5 +127,5 @@ connection
     });
   })
   .catch((err) => {
-    console.log(err);
+    console.log("Database connection error: ", err);
   });

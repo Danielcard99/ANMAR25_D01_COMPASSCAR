@@ -80,22 +80,23 @@ app.post("/api/v1/cars", validateCarData, async (req, res) => {
 // Route to add items to an existing car
 app.put("/api/v1/cars/:id/items", async (req, res) => {
   const carId = Number(req.params.id);
-  const items = req.body;
+  const itemsList = req.body;
   const errors = [];
 
   // Validate the provided items
-  if (!Array.isArray(items) || items.length === 0) {
+  if (!Array.isArray(itemsList) || itemsList.length === 0) {
     errors.push("items is required");
   } else {
-    if (items.length > 5) {
+    if (itemsList.length > 5) {
       errors.push("items must be a maximum of 5");
     }
 
-    if (new Set(items).size !== items.length) {
+    if (new Set(itemsList).size !== items.length) {
       errors.push("items cannot be repeated");
     }
   }
 
+  // Return validation errors if any exist
   if (errors.length) {
     return res.status(400).json({ errors });
   }
@@ -109,11 +110,47 @@ app.put("/api/v1/cars/:id/items", async (req, res) => {
 
     // Remove old items and add new ones
     await CarsItem.destroy({ where: { car_id: carId } });
-    await CarsItem.bulkCreate(items.map((name) => ({ name, car_id: carId })));
+    await CarsItem.bulkCreate(
+      itemsList.map((name) => ({ name, car_id: carId }))
+    );
 
     res.status(204).send();
   } catch (error) {
     console.log(error);
+    res.status(500).json({ errors: ["an internal server error occurred"] });
+  }
+});
+
+// Route to get a car by its ID, including associated items.
+app.get("/api/v1/cars/:id", async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const car = await Cars.findByPk(id, {
+      include: {
+        model: CarsItem,
+        attributes: ["name"],
+      },
+    });
+
+    if (!car) {
+      return res.status(404).json({ errors: ["car not found"] });
+    }
+
+    // Format response to match API conventions
+    const formattedCar = {
+      id: car.id,
+      brand: car.brand,
+      model: car.model,
+      year: car.year,
+      plate: car.plate,
+      created_at: car.createdAt, // Mudando para snake_case
+      items: car.cars_items.map((item) => item.name),
+    };
+
+    res.status(200).json(formattedCar);
+  } catch (error) {
+    console.log("Database: error", error);
     res.status(500).json({ errors: ["an internal server error occurred"] });
   }
 });

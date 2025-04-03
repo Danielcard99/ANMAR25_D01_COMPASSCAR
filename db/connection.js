@@ -10,6 +10,16 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: process.env.DB_DIALECT,
+    dialectOptions: {
+      timezone: "America/Sao_Paulo",
+      dateStrings: true,
+      typecast: (field, next) => {
+        if (field.type === "DATETIME") {
+          return new Date(field.string()).toISOString();
+        }
+        return next();
+      },
+    },
   }
 );
 

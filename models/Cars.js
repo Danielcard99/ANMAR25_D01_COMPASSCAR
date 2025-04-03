@@ -1,24 +1,28 @@
 import { DataTypes } from "sequelize";
 import db from "../db/connection.js";
 
-const Cars = db.define("cars", {
-  brand: {
-    type: DataTypes.STRING,
-    allowNull: false,
+const Cars = db.define(
+  "cars",
+  {
+    brand: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    model: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    year: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    plate: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
   },
-  model: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  plate: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  year: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-});
+  { timestamps: true, updatedAt: false }
+);
 
 export default Cars;

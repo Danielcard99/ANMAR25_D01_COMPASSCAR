@@ -3,7 +3,7 @@ import CarsItem from "../models/CarsItem.js";
 import { Op } from "sequelize";
 
 // Create a new car if the plate does not already exist
-export const createCar = async (req, res) => {
+export const createCar = async (req, res, next) => {
   const { brand, model, plate, year } = req.body;
 
   try {
@@ -17,34 +17,14 @@ export const createCar = async (req, res) => {
 
     res.status(201).json(newCar);
   } catch (error) {
-    console.log("Database error:", error);
-    res.status(500).json({ errors: ["an internal server error occurred"] });
+    next(error);
   }
 };
 
 // Add or replace items for a specific car
-export const addItemsToCar = async (req, res) => {
+export const addItemsToCar = async (req, res, next) => {
   const carId = Number(req.params.id);
   const itemsList = req.body;
-  const errors = [];
-
-  // Validate the provided items
-  if (!Array.isArray(itemsList) || itemsList.length === 0) {
-    errors.push("items is required");
-  } else {
-    if (itemsList.length > 5) {
-      errors.push("items must be a maximum of 5");
-    }
-
-    if (new Set(itemsList).size !== itemsList.length) {
-      errors.push("items cannot be repeated");
-    }
-  }
-
-  // Return validation errors if any exist
-  if (errors.length) {
-    return res.status(400).json({ errors });
-  }
 
   try {
     // Check if the car exists in the database
@@ -61,13 +41,12 @@ export const addItemsToCar = async (req, res) => {
 
     res.status(204).send();
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ errors: ["an internal server error occurred"] });
+    next(error);
   }
 };
 
 // Get a single car by ID, including its items
-export const getCarById = async (req, res) => {
+export const getCarById = async (req, res, next) => {
   const id = req.params.id;
 
   try {
@@ -96,13 +75,12 @@ export const getCarById = async (req, res) => {
 
     res.status(200).json(formattedCar);
   } catch (error) {
-    console.log("Database error:", error);
-    res.status(500).json({ errors: ["an internal server error occurred"] });
+    next(error);
   }
 };
 
 // Get a paginated list of cars, with optional filters (year, plate, brand)
-export const getCars = async (req, res) => {
+export const getCars = async (req, res, next) => {
   try {
     const { year, final_plate, brand, page = 1, limit = 2 } = req.query;
 
@@ -145,13 +123,12 @@ export const getCars = async (req, res) => {
       .status(200)
       .json({ count, pages: Math.ceil(count / limitNumber), data: rows });
   } catch (error) {
-    console.log("Database: error", error);
-    res.status(500).json({ errors: ["an internal server error occurred"] });
+    next(error);
   }
 };
 
 // Partially update fields of a car
-export const updateCar = async (req, res) => {
+export const updateCar = async (req, res, next) => {
   const { id } = req.params;
   const updates = req.body;
 
@@ -167,13 +144,12 @@ export const updateCar = async (req, res) => {
     await car.update(updates);
     res.status(204).send();
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ errors: ["internal server error"] });
+    next(error);
   }
 };
 
 // Delete a car and all its related items
-export const deleteCar = async (req, res) => {
+export const deleteCar = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -190,7 +166,6 @@ export const deleteCar = async (req, res) => {
 
     res.status(204).send();
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ errors: ["internal server error"] });
+    next(error);
   }
 };

@@ -127,6 +127,7 @@ app.get("/api/v1/cars/:id", async (req, res) => {
   const id = req.params.id;
 
   try {
+    // Find the car and include its associated items
     const car = await Cars.findByPk(id, {
       include: {
         model: CarsItem,
@@ -163,10 +164,12 @@ app.get("/api/v1/cars", async (req, res) => {
 
     let where = {};
 
+    // Filter by year (greater than or equal)
     if (year && !isNaN(parseInt(year, 10))) {
       where.year = { [Op.gte]: parseInt(year, 10) };
     }
 
+    // Filter by final digit of the plate
     if (final_plate) {
       const cleanFinalPlate = final_plate?.toString().trim();
       const lastDigit =
@@ -177,10 +180,12 @@ app.get("/api/v1/cars", async (req, res) => {
       }
     }
 
+    // Filter by brand (case-insensitive like)
     if (brand) {
       where.brand = { [Op.like]: `%${brand}%` };
     }
 
+    // Pagination logic
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
     const offset = (pageNumber - 1) * limitNumber;
@@ -197,6 +202,66 @@ app.get("/api/v1/cars", async (req, res) => {
   } catch (error) {
     console.log("Database: error", error);
     res.status(500).json({ errors: ["an internal server error occurred"] });
+  }
+});
+
+// Route to update car fields partially
+app.patch("/api/v1/cars/:id", async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  const errors = [];
+
+  const hasBrand = "brand" in updates;
+  const hasModel = "model" in updates;
+
+  // If updating brand or model, both must be present
+  if ((hasBrand && !hasModel) || (!hasBrand && hasModel)) {
+    errors.push("model must also be informed");
+  }
+
+  // Validate year range
+  if ("year" in updates) {
+    const { year } = updates;
+    const currentYear = new Date().getFullYear();
+    if (year < currentYear - 9 || year > currentYear + 1) {
+      errors.push(
+        `year must be between ${currentYear - 9} and ${currentYear + 1}`
+      );
+    }
+  }
+
+  // Validate plate format and uniqueness
+  if ("plate" in updates) {
+    const { plate } = updates;
+    if (!/^[A-Z]{3}-\d[A-Z0-9]\d{2}$/.test(plate)) {
+      errors.push("plate must be in the correct format ABC-1C34");
+    } else {
+      const existingCar = await Cars.findOne({ where: { plate } });
+
+      if (existingCar) {
+        return res.status(409).json({ errors: ["car already registered"] });
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    return res.json({ errors });
+  }
+
+  try {
+    // Check if the car exists
+    const car = await Cars.findByPk(id);
+
+    if (!car) {
+      return res.status(404).json({ errors: ["car not found"] });
+    }
+
+    // Apply the updates
+    await car.update(updates);
+    res.status(204).send();
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ errors: ["internal server error"] });
   }
 });
 

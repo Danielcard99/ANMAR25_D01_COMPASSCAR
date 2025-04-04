@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import db from "../db/connection.js";
+import db from "../config/database.js";
 import Cars from "./Cars.js";
 
 const CarsItem = db.define(

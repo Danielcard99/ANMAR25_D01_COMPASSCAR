@@ -146,7 +146,7 @@ app.get("/api/v1/cars/:id", async (req, res) => {
       model: car.model,
       year: car.year,
       plate: car.plate,
-      created_at: car.createdAt, // Mudando para snake_case
+      created_at: car.createdAt,
       items: car.cars_items.map((item) => item.name),
     };
 
@@ -262,6 +262,29 @@ app.patch("/api/v1/cars/:id", async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ errors: ["internal server error"] });
+  }
+});
+
+// Route to delete a car and its items
+app.delete("/api/v1/cars/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Check if car exists
+    const car = await Cars.findByPk(id);
+
+    if (!car) {
+      return res.status(404).json({ errors: ["car not found"] });
+    }
+
+    // Delete related items and then the car
+    await CarsItem.destroy({ where: { car_id: id } });
+    await car.destroy();
+
+    res.status(204).send();
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ errors: ["internal server error"] });
   }
 });
 

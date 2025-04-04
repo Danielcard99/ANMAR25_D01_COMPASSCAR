@@ -109,12 +109,7 @@ app.post("/api/v1/cars", validateCarData, async (req, res) => {
       return res.status(409).json({ errors: ["car already registered"] });
     }
 
-    await Cars.create({ brand, model, plate, year });
-
-    const newCar = await Cars.findOne({
-      order: [["id", "DESC"]],
-      raw: true,
-    });
+    const newCar = await Cars.create({ brand, model, plate, year });
 
     res.status(201).json(newCar);
   } catch (error) {

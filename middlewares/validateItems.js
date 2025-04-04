@@ -22,3 +22,5 @@ const validateItems = (req, res, next) => {
 
   next();
 };
+
+export default validateItems;

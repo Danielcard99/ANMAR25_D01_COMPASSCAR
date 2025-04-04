@@ -1,3 +1,6 @@
+import validateCarData from "../middlewares/validateCarData.js";
+import validatePartialUpdate from "../middlewares/validatePartialUpdate.js";
+import validateItems from "../middlewares/validateItems.js";
 import express from "express";
 import {
   createCar,
@@ -8,16 +11,13 @@ import {
   deleteCar,
 } from "../controllers/carController.js";
 
-import validateCarData from "../middlewares/validateCarData.js";
-import validatePartialUpdate from "../middlewares/validatePartialUpdate.js";
-
 const router = express.Router();
 
 // Route to create a new car
 router.post("/cars", validateCarData, createCar);
 
 // Route to add or replace items for a car by ID
-router.put("/cars/:id/items", addItemsToCar);
+router.put("/cars/:id/items", validateItems, addItemsToCar);
 
 // Route to get a specific car by ID, including its items
 router.get("/cars/:id", getCarById);

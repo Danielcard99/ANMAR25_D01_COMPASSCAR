@@ -3,6 +3,7 @@ import cors from "cors";
 import Cars from "./models/Cars.js";
 import CarsItem from "./models/CarsItem.js";
 import connection from "./db/connection.js";
+import { Op } from "sequelize";
 
 const app = express();
 const port = 3000;
@@ -91,7 +92,7 @@ app.put("/api/v1/cars/:id/items", async (req, res) => {
       errors.push("items must be a maximum of 5");
     }
 
-    if (new Set(itemsList).size !== items.length) {
+    if (new Set(itemsList).size !== itemsList.length) {
       errors.push("items cannot be repeated");
     }
   }
@@ -149,6 +150,50 @@ app.get("/api/v1/cars/:id", async (req, res) => {
     };
 
     res.status(200).json(formattedCar);
+  } catch (error) {
+    console.log("Database error:", error);
+    res.status(500).json({ errors: ["an internal server error occurred"] });
+  }
+});
+
+// Route to get a paginated list of cars with optional filters
+app.get("/api/v1/cars", async (req, res) => {
+  try {
+    const { year, final_plate, brand, page = 1, limit = 2 } = req.query;
+
+    let where = {};
+
+    if (year && !isNaN(parseInt(year, 10))) {
+      where.year = { [Op.gte]: parseInt(year, 10) };
+    }
+
+    if (final_plate) {
+      const cleanFinalPlate = final_plate?.toString().trim();
+      const lastDigit =
+        cleanFinalPlate.length > 0 ? cleanFinalPlate.slice(-1) : null;
+
+      if (lastDigit && !isNaN(lastDigit)) {
+        where.plate = { [Op.like]: `%${lastDigit}` };
+      }
+    }
+
+    if (brand) {
+      where.brand = { [Op.like]: `%${brand}%` };
+    }
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const offset = (pageNumber - 1) * limitNumber;
+
+    const { count, rows } = await Cars.findAndCountAll({
+      where,
+      limit: limitNumber,
+      offset: offset,
+    });
+
+    res
+      .status(200)
+      .json({ count, pages: Math.ceil(count / limitNumber), data: rows });
   } catch (error) {
     console.log("Database: error", error);
     res.status(500).json({ errors: ["an internal server error occurred"] });

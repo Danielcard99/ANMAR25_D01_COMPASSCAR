@@ -61,7 +61,7 @@ const validatePartialUpdate = async (req, res, next) => {
   const hasModel = "model" in updates;
 
   // If updating brand or model, both must be present
-  if ((hasBrand && !hasModel) || (!hasBrand && hasModel)) {
+  if (hasBrand && !hasModel) {
     errors.push("model must also be informed");
   }
 

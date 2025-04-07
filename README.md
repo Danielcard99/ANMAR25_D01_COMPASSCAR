@@ -125,6 +125,35 @@ You should see a message that the server is running.
 - Year must be between current year - 9 and current year + 1
 - When updating the `brand`, you must also provide the `model`
 
+## 📁 Estrutura de Pastas
+
+```
+ANMAR25_D01_COMPASSCAR/
+├── config/
+│   └── database.js
+├── controllers/
+│   └── carController.js
+├── middlewares/
+│   ├── errorHandler.js
+│   ├── validateCarData.js
+│   ├── validateItems.js
+│   └── validatePartialUpdate.js
+├── models/
+│   ├── Cars.js
+│   └── CarsItem.js
+├── routes/
+│   └── carRoutes.js
+├── utils/
+│   ├── isValidPlate.js
+│   └── toSnakeCase.js
+├── .env
+├── .gitignore
+├── index.js
+├── package.json
+├── package-lock.json
+└── README.md
+```
+
 ## 👨‍💻 Author
 
 - Daniel Cardoso

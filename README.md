@@ -125,7 +125,7 @@ You should see a message that the server is running.
 - Year must be between current year - 9 and current year + 1
 - When updating the `brand`, you must also provide the `model`
 
-## 📁 Estrutura de Pastas
+## 📁 Folder Structure
 
 ```
 ANMAR25_D01_COMPASSCAR/

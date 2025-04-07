@@ -1,6 +1,7 @@
 import Cars from "../models/Cars.js";
 import CarsItem from "../models/CarsItem.js";
 import { Op } from "sequelize";
+import toSnakeCase from "../utils/toSnakeCase.js";
 
 // Create a new car if the plate does not already exist
 export const createCar = async (req, res, next) => {
@@ -15,7 +16,8 @@ export const createCar = async (req, res, next) => {
 
     const newCar = await Cars.create({ brand, model, plate, year });
 
-    res.status(201).json(newCar);
+    const plainCar = newCar.get({ plain: true });
+    res.status(201).json(toSnakeCase(plainCar));
   } catch (error) {
     next(error);
   }
@@ -63,15 +65,10 @@ export const getCarById = async (req, res, next) => {
     }
 
     // Format response to match API conventions
-    const formattedCar = {
-      id: car.id,
-      brand: car.brand,
-      model: car.model,
-      year: car.year,
-      plate: car.plate,
-      created_at: car.createdAt,
-      items: car.cars_items.map((item) => item.name),
-    };
+    const plainCar = car.get({ plain: true });
+    plainCar.items = plainCar.cars_items?.map((item) => item.name) || [];
+    delete plainCar.cars_items;
+    const formattedCar = toSnakeCase(plainCar);
 
     res.status(200).json(formattedCar);
   } catch (error) {
@@ -119,9 +116,15 @@ export const getCars = async (req, res, next) => {
       offset: offset,
     });
 
-    res
-      .status(200)
-      .json({ count, pages: Math.ceil(count / limitNumber), data: rows });
+    const formattedRows = rows.map((car) =>
+      toSnakeCase(car.get({ plain: true }))
+    );
+
+    res.status(200).json({
+      count,
+      pages: Math.ceil(count / limitNumber),
+      data: formattedRows,
+    });
   } catch (error) {
     next(error);
   }

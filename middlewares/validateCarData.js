@@ -1,3 +1,5 @@
+import isValidPlate from "../utils/isValidPlate.js";
+
 // Middleware to validate car data before saving to the database
 const validateCarData = (req, res, next) => {
   const { brand, model, plate, year } = req.body;
@@ -5,12 +7,12 @@ const validateCarData = (req, res, next) => {
   const currentYear = new Date().getFullYear();
 
   // Validate brand
-  if (!brand) {
+  if (!brand || brand.trim() === "") {
     errors.push("brand is required");
   }
 
   // Validate model
-  if (!model) {
+  if (!model || model.trim() === "") {
     errors.push("model is required");
   }
 
@@ -26,7 +28,7 @@ const validateCarData = (req, res, next) => {
   // Validate plate format
   if (!plate || plate.trim() === "") {
     errors.push("plate is required");
-  } else if (!/^[A-Z]{3}-\d[A-Z0-9]\d{2}$/.test(plate)) {
+  } else if (!isValidPlate(plate)) {
     errors.push("plate must be in the correct format ABC-1C34");
   }
 

@@ -1,18 +1,36 @@
 import Cars from "../models/Cars.js";
+import isValidPlate from "../utils/isValidPlate.js";
 
 const validatePartialUpdate = async (req, res, next) => {
   const updates = req.body;
   const errors = [];
 
+  // Remove null or empty fields (except model if brand is provided)
+  Object.keys(updates).forEach((key) => {
+    if (
+      (updates[key] === null || updates[key] === "") &&
+      !(key === "model" && "brand" in updates)
+    ) {
+      delete updates[key];
+    }
+  });
+
   const hasBrand = "brand" in updates;
   const hasModel = "model" in updates;
 
-  // If updating brand or model, both must be present
-  if (hasBrand && !hasModel) {
-    errors.push("model must also be informed");
+  // Validate brand-model dependency
+  if (hasBrand) {
+    if (!hasModel || updates.model.trim() === "") {
+      errors.push("model must also be informed");
+    }
   }
 
-  // Validate year range
+  // Model alone, but empty
+  if (hasModel && updates.model.trim() === "") {
+    errors.push("model cannot be empty");
+  }
+
+  // Validate year
   if ("year" in updates) {
     const { year } = updates;
     const currentYear = new Date().getFullYear();
@@ -23,11 +41,11 @@ const validatePartialUpdate = async (req, res, next) => {
     }
   }
 
-  // Validate plate format and uniqueness
+  // Validate plate
   if ("plate" in updates) {
     const { plate } = updates;
 
-    if (!/^[A-Z]{3}-\d[A-Z0-9]\d{2}$/.test(plate)) {
+    if (!isValidPlate(plate)) {
       errors.push("plate must be in the correct format ABC-1C34");
     } else {
       const existingCar = await Cars.findOne({ where: { plate } });

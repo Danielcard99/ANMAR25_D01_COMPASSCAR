@@ -13,8 +13,9 @@ app.use(express.json());
 app.use(cors());
 
 // Register the car routes with the API prefix "/api/v1"
-app.use("/api/v1", carRoutes);
+app.use("/api/v1/cars", carRoutes);
 
+// Global error-handling middleware
 app.use(errorHandler);
 
 // Connect to the database and start the server

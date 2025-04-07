@@ -22,7 +22,7 @@ const Cars = db.define(
       unique: true,
     },
   },
-  { timestamps: true, updatedAt: false }
+  { timestamps: true, updatedAt: false, underscored: true }
 );
 
 export default Cars;

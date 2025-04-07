@@ -20,7 +20,7 @@ const CarsItem = db.define(
       onDelete: "RESTRICT",
     },
   },
-  { timestamps: true, updatedAt: false }
+  { timestamps: true, updatedAt: false, underscored: true }
 );
 
 Cars.hasMany(CarsItem, { foreignKey: "car_id" });

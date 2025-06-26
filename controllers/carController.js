@@ -3,7 +3,6 @@ import CarsItem from "../models/CarsItem.js";
 import { Op } from "sequelize";
 import toSnakeCase from "../utils/toSnakeCase.js";
 
-// Create a new car if the plate does not already exist
 export const createCar = async (req, res, next) => {
   const { brand, model, plate, year } = req.body;
 
@@ -23,19 +22,16 @@ export const createCar = async (req, res, next) => {
   }
 };
 
-// Add or replace items for a specific car
 export const addItemsToCar = async (req, res, next) => {
   const carId = Number(req.params.id);
   const itemsList = req.body;
 
   try {
-    // Check if the car exists in the database
     const carExists = await Cars.findByPk(carId);
     if (!carExists) {
       return res.status(404).json({ errors: ["car not found"] });
     }
 
-    // Remove old items and add new ones
     await CarsItem.destroy({ where: { car_id: carId } });
     await CarsItem.bulkCreate(
       itemsList.map((name) => ({ name, car_id: carId }))
@@ -47,12 +43,10 @@ export const addItemsToCar = async (req, res, next) => {
   }
 };
 
-// Get a single car by ID, including its items
 export const getCarById = async (req, res, next) => {
   const id = req.params.id;
 
   try {
-    // Find the car and include its associated items
     const car = await Cars.findByPk(id, {
       include: {
         model: CarsItem,
@@ -64,7 +58,6 @@ export const getCarById = async (req, res, next) => {
       return res.status(404).json({ errors: ["car not found"] });
     }
 
-    // Format response to match API conventions
     const plainCar = car.get({ plain: true });
     plainCar.items = plainCar.cars_items?.map((item) => item.name) || [];
     delete plainCar.cars_items;
@@ -76,19 +69,16 @@ export const getCarById = async (req, res, next) => {
   }
 };
 
-// Get a paginated list of cars, with optional filters (year, plate, brand)
 export const getCars = async (req, res, next) => {
   try {
-    const { year, final_plate, brand, page = 1, limit = 2 } = req.query;
+    const { year, final_plate, brand, page = 1, limit = 5 } = req.query;
 
     let where = {};
 
-    // Filter by year (greater than or equal)
     if (year && !isNaN(parseInt(year, 10))) {
       where.year = { [Op.gte]: parseInt(year, 10) };
     }
 
-    // Filter by final digit of the plate
     if (final_plate) {
       const cleanFinalPlate = final_plate?.toString().trim();
       const lastDigit =
@@ -99,17 +89,14 @@ export const getCars = async (req, res, next) => {
       }
     }
 
-    // Filter by brand name (case-insensitive)
     if (brand) {
       where.brand = { [Op.like]: `%${brand}%` };
     }
 
-    // Pagination logic
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
     const offset = (pageNumber - 1) * limitNumber;
 
-    // Query the database
     const { count, rows } = await Cars.findAndCountAll({
       where,
       limit: limitNumber,
@@ -130,20 +117,17 @@ export const getCars = async (req, res, next) => {
   }
 };
 
-// Partially update fields of a car
 export const updateCar = async (req, res, next) => {
   const { id } = req.params;
   const updates = req.body;
 
   try {
-    // Check if the car exists
     const car = await Cars.findByPk(id);
 
     if (!car) {
       return res.status(404).json({ errors: ["car not found"] });
     }
 
-    // Apply the updates
     await car.update(updates);
     res.status(204).send();
   } catch (error) {
@@ -151,19 +135,16 @@ export const updateCar = async (req, res, next) => {
   }
 };
 
-// Delete a car and all its related items
 export const deleteCar = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    // Check if car exists
     const car = await Cars.findByPk(id);
 
     if (!car) {
       return res.status(404).json({ errors: ["car not found"] });
     }
 
-    // Delete related items and then the car
     await CarsItem.destroy({ where: { car_id: id } });
     await car.destroy();
 

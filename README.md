@@ -46,11 +46,7 @@ DB_HOST=localhost
 DB_DIALECT=mysql
 ```
 
-### 5. Set Up Your Database
-
-Make sure MySQL is running. You can use tools like MySQL Workbench or DBeaver to create your database.
-
-### 6. Run the Project
+### 5. Run the Project
 
 Start the server with:
 
